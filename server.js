@@ -6,6 +6,7 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -16,31 +17,32 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 });
 
-// API endpoint to fetch all messages
-app.get('/api/messages', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM messages');
+//API endpoint to fetch all the reasturants
+app.get('/api/get-restaurants', async (req, res) =>{
+  try{
+    const result = await pool.query('SELECT * FROM restaurants');
     res.json(result.rows);
-  } catch (error) {
-    console.error('Error querying the database:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  }catch(error){
+    console.error('Error querying the database', error);
+    res.status(500).json({error: 'Internal server error'});
   }
 });
 
-// API endpoint to add a message
-app.post('/api/messages', async (req, res) => {
-  const { content } = req.body;
-  try {
-    const result = await pool.query('INSERT INTO messages (content) VALUES ($1) RETURNING *', [content]);
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error querying the database:', error);
-    res.status(500).json({ error: 'Internal server error' });
+// API endpoint to fectch restaurant by name
+app.get('/api/get-restaurantByName', async(req,res) => {
+  const {name} = req.query;
+  try{
+    const result = await pool.query('SELECT * FROM restaurants WHERE name = $1', [name]);
+    res.json(result.rows);
+  }catch(error){
+    console.error('Error querying the database', error);
+    res.status(500).json({error: 'Internal server error'});
   }
-});
+})
 
-// Start the server
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
-});
+if(process.env.environment=='local'){
+  const PORT = 3000;
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+  });
+}
